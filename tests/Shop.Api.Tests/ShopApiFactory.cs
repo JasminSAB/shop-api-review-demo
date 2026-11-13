@@ -9,19 +9,31 @@ using Shop.Api.Data;
 
 namespace Shop.Api.Tests;
 
-/// <summary>The API on a private in-memory SQLite database, seeded like production.</summary>
+/// <summary>
+/// The API on a private SQLite database, seeded like production: in memory by default, or a database
+/// file where every request opens its own connection, as it does in production.
+/// </summary>
 public sealed class ShopApiFactory : WebApplicationFactory<Program>
 {
     private readonly SqliteConnection _connection = new("Data Source=:memory:");
+    private readonly string? _databaseFile;
+
+    /// <summary>Every SQL command sent to the database by the API.</summary>
+    public Findings.SqlCapture Sql { get; } = new();
 
     public ShopApiFactory() => _connection.Open();
+
+    private ShopApiFactory(string databaseFile) => _databaseFile = databaseFile;
+
+    /// <summary>An API on a database file, where every request opens its own connection.</summary>
+    public static ShopApiFactory WithDatabaseFile(string databaseFile) => new(databaseFile);
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<DbContextOptions<ShopDbContext>>();
-            services.AddDbContext<ShopDbContext>(options => options.UseSqlite(_connection));
+            services.AddDbContext<ShopDbContext>(options => (_databaseFile is null ? options.UseSqlite(_connection) : options.UseSqlite($"Data Source={_databaseFile};Default Timeout=30")).AddInterceptors(Sql));
         });
     }
 

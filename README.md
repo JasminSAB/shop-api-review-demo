@@ -32,3 +32,10 @@ curl -H "X-Customer-Id: 1" http://localhost:5000/api/products
 ```
 dotnet test
 ```
+
+## Code review demo
+
+This repository is the demo for an automated code review: the code above looks clean, compiles without
+warnings and passes its tests, yet hides eight problems. The review in
+[pull request #3](https://github.com/JasminSAB/shop-api-review-demo/pull/3) was run blind, before
+the answer key existed. The answer key, with one test per problem, is in [FINDINGS.md](FINDINGS.md).
